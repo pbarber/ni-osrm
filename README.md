@@ -2,6 +2,8 @@
 
 Building a travel times dataset for NI using [OSRM](https://project-osrm.org/). Uses Docker, setup is based on [this gist](https://gist.github.com/AlexandraKapp/e0eee2beacc93e765113aff43ec77789).
 
+This repo includes a [notebook](osrm.py) that creates a combined Small Area and Data Zone travel matrix for NI.
+
 ## Set up the ORSM server
 
 Visit the [Geofabrik downloads page](https://download.geofabrik.de/) and navigate through the Europe section to download the latest [Ireland and Northern Ireland](https://download.geofabrik.de/europe/ireland-and-northern-ireland.html) OSM PBF.
@@ -86,3 +88,17 @@ matrix.to_csv('travel-matrix-YYYYMMDD.csv', index=False)
 ```
 
 Note that the above reuses the `points` data from when the request data file was created, replace `MYKEY` with the name of the unique key for your points.
+
+## Run the notebook
+
+The notebook creates a combined Small Area and Data Zone travel matrix for NI.
+
+Developed in Visual Studio Code using the [Remote-Containers](https://code.visualstudio.com/docs/devcontainers/containers) extension. To start the container, open `docker-compose.yml` and select `Docker: Compose Up`. Then find the `ni-osrm_dev` container and right-click it, choose `Attach Visual Studio Code`. This will open a new window within the container. The first time you run the container you will need to install the Python extension, and choose the Python interpreter at `/usr/local/bin/python`.
+
+Key Python libraries used are:
+
+* [Pandas](https://pandas.pydata.org/) - for general data manipulation
+* [Requests](https://requests.readthedocs.io/en/latest/) - for getting data from URLs
+* [Geopandas](https://geopandas.org/en/stable/) - for loading and displaying GeoJSON boundary data
+* [PyProj](https://pyproj4.github.io/pyproj/) - for transforming between geographic projections
+* [Matplotlib](https://matplotlib.org/) - for plotting confirmatory results
