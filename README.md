@@ -45,9 +45,13 @@ Handling long strings of coordinates is best done via a file. A Python example o
 ```python
 import pandas
 
-buf = stats[['x','y']].sort_values(by='MYKEY').to_csv(lineterminator=';', header=False, index=False)
-with open('formatted-coordinates.txt', 'w') as fo:
-    fo.write(buf[:-1])
+def create_points_for_osrm(input, filename):
+    buf = input.to_csv(lineterminator=';', header=False, index=False)
+    with open(filename, 'w') as fo:
+        fo.write(buf[:-1])
+
+points = dataset.sort_values('MYKEY').set_index('MYKEY')[['x','y']]
+create_points_for_osrm(mykey, 'formatted-coordinates.txt')
 ```
 
 It is important to sort the output by a unique key for the points as the process of creating the travel times matrix will not preserve any identifiers, so these will need to be recreated afterwards based on the ordering of the results. To do this replace `MYKEY` with the name of the key for your points.
@@ -69,10 +73,16 @@ Once the `curl` command above has completed, it should produce a JSON file conta
 ```python
 import pandas
 
-osrm = pandas.read_json('travel-matrix-YYYYMMDD.json')['durations'].explode()
-osrm = osrm.reset_index().rename(columns={'index' : 'from'})
-osrm['to'] = osrm.groupby('from').cumcount()
-osrm.to_csv('travel-matrix-YYYYMMDD.csv', index=False)
+def get_matrix_from_osrm(filename, reference, codecol):
+    osrm = pandas.read_json(filename)['durations'].explode()
+    osrm = osrm.reset_index().rename(columns={'index' : 'from'})
+    osrm['to'] = osrm.groupby('from').cumcount()
+    osrm = pandas.merge(osrm, reference, how='inner', left_on='to', right_index=True)
+    osrm = pandas.merge(osrm, reference, how='inner', left_on='from', right_index=True)
+    return osrm.drop(columns=['to','from']).rename(columns={codecol + '_x': 'to', codecol + '_y': 'from'})
+
+matrix = get_matrix_from_orsm('travel-matrix-YYYYMMDD.json', points.reset_index()['MYKEY'], 'MYKEY')
+matrix.to_csv('travel-matrix-YYYYMMDD.csv', index=False)
 ```
 
-Note that the `to` and `from` columns will be the sort rank of your unique index for the coordinates.
+Note that the above reuses the `points` data from when the request data file was created, replace `MYKEY` with the name of the unique key for your points.
